@@ -92,12 +92,16 @@ filename = filename:gsub("{spritename}",
 filename = filename .. '.' .. dlg.data.format
 
 
--- Finally, perform everything.
-Sprite:resize(Sprite.width * dlg.data.scale, Sprite.height * dlg.data.scale)
-local layers_visibility_data = HideLayers(Sprite)
-exportCombinations(Sprite, Sprite.layers, output_path .. filename)
-RestoreLayersVisibility(Sprite, layers_visibility_data)
-Sprite:resize(Sprite.width / dlg.data.scale, Sprite.height / dlg.data.scale)
+-- Finally, perform everything, maintaining 1 transaction
+app.transaction("Export Combinations", function()
+    Sprite:resize(Sprite.width * dlg.data.scale, Sprite.height * dlg.data.scale)
+    local layers_visibility_data = HideLayers(Sprite)
+    exportCombinations(Sprite, Sprite.layers, output_path .. filename)
+    RestoreLayersVisibility(Sprite, layers_visibility_data)
+    Sprite:resize(Sprite.width / dlg.data.scale, Sprite.height / dlg.data.scale)
+end)
+-- Undo the transaction to revert history to before exporting
+app.undo() 
 
 -- Save the original file if specified
 if dlg.data.save then Sprite:saveAs(dlg.data.directory) end
